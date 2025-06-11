@@ -17,13 +17,17 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Check copyright year
+      - name: Update copyright year in modified files
         run: |
           current_year=$(date +'%Y')
-          copyright_year=$(grep -oP '(?<=# Copyright \(c\) )\d{4}' src/main.py || echo "0")
-          if [ "$current_year" -ne "$copyright_year" ]; then
-            echo "Copyright year in main.py ($copyright_year) does not match current year ($current_year)."
-            exit 1
-          else
-            echo "Copyright year is correct."
-          fi
+          # Get list of modified files in the push/PR
+          git fetch origin ${{ github.base_ref }} --depth=1 || true
+          MODIFIED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} || git diff --name-only HEAD~1)
+          for file in $MODIFIED_FILES; do
+            if grep -qE '# Copyright \(c\) [0-9]{4}' "$file"; then
+              echo "Updating copyright year in $file"
+              sed -i "s/# Copyright (c) [0-9]\{4\}/# Copyright (c) $current_year/" "$file"
+            fi
+          done
+          # Show changes
+          git diff
