@@ -19,10 +19,14 @@ jobs:
 
       - name: Update copyright year in modified files
         run: |
+          set -e
           current_year=$(date +'%Y')
-          # Get list of modified files in the push/PR
-          git fetch origin ${{ github.base_ref }} --depth=1 || true
-          MODIFIED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} || git diff --name-only HEAD~1)
+          # Try to get modified files, fallback to all tracked files if this is the first commit
+          if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+            MODIFIED_FILES=$(git diff --name-only HEAD~1)
+          else
+            MODIFIED_FILES=$(git ls-files)
+          fi
           for file in $MODIFIED_FILES; do
             if grep -qE '# Copyright \(c\) [0-9]{4}' "$file"; then
               echo "Updating copyright year in $file"
