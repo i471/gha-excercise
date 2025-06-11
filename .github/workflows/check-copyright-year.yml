@@ -40,9 +40,11 @@ jobs:
           git diff
       
       - name: Commit and push changes if needed
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "$GITHUB_ACTOR"
+          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           if ! git diff --quiet; then
             git add .
             git commit -m "chore: update copyright year to $(date +'%Y')"
